@@ -27,7 +27,7 @@ Now we can connect to the remote Server. Note that the server runs on Linux, so 
 1. Connect to VPN as shown above.
 2. Open terminal on your local machine and *ssh* into remote server using your Computing Cluster Credentials (username and password):
     
-    ```ssh USERNAME[@serv-6404.kl.dfki.de](mailto:nothnagel@serv-6404.kl.dfki.de)```
+    ```ssh USERNAME@serv-6404.kl.dfki.de```
     
 3. Optional: Check if GPUs are running:
     
@@ -58,14 +58,14 @@ Before jumping in the fun part - model training - we should take some time to pr
 
 1. Create your repo with a consistent folder structure on your local machine.
 2. Push this repo to Github/Gitlab. IMPORTANT: Include large folders/files in the gitignore. We do not want to push our datasets (if they are large) and trained models to github but keep them only on the remote server!
-3. *ssh* into the remote server and *git clone* the repo from Github/Gitlab on the server in the file directory of your choice: This will most likely be in /data/USERNAME/
-4. If the dataset is not on github (for instance if it is larger than 100MB), *scp* the large files (raw data mostly) from your local machine to the remote server. Put it, for example, under /data/USERNAME/PROJECT_FOLDER. 
-*Advanced: Create a new data, models folder in the cloned repo and scp the large files directly there. You MUST specify the gitignore accordingly then. Easier to just drop the data in a separate folder on the remote server and mount this folder when training.*
+3. ```ssh``` into the remote server and ```git clone``` the repo from Github/Gitlab on the server in the file directory of your choice: This will most likely be in ```/data/USERNAME/```
+4. If the dataset is not on github (for instance if it is larger than 100MB), ```scp``` the large files (raw data mostly) from your local machine to the remote server. Put it, for example, under ```/data/USERNAME/PROJECT_FOLDER```. 
+*Advanced: Create a new data, models folder in the cloned repo and ```scp``` the large files directly there. You MUST specify the gitignore accordingly then. Easier to just drop the data in a separate folder on the remote server and mount this folder when training.*
 
-—> Now you have set up the base structure. 
-You have a Repo pushed to Github for version control. **✓** 
-You have the data and repo on your local machine for code development. **✓** 
-You have the repo on the remote server to pull changes and run the code with the datasets and GPUs. **✓** 
+—> Now you have set up the base structure:
+- You have a Repo pushed to Github for version control. **✓** 
+- You have the data and repo on your local machine for code development. **✓** 
+- You have the repo on the remote server to pull changes and run the code with the datasets and GPUs. **✓** 
 
  **Workflow to stay in sync:**
 
@@ -75,7 +75,7 @@ You have the repo on the remote server to pull changes and run the code with the
 
 *Note:* 
 
-- If there are any large files that should not enter Github. *scp* them directly from local machine to remote server.
+- If there are any large files that should not enter Github. ```scp``` them directly from local machine to remote server.
 - If raw data has to be transformed and it needs GPU support (or you simply decide to run all jobs on the remote machine which is recommended), run it on the remote server and directly put it in a data folder there.
 
 # Sending data and files to remote server
