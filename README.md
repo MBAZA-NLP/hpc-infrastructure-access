@@ -27,11 +27,11 @@ Now we can connect to the remote Server. Note that the server runs on Linux, so 
 1. Connect to VPN as shown above.
 2. Open terminal on your local machine and *ssh* into remote server using your Computing Cluster Credentials (username and password):
     
-    *ssh USERNAME[@serv-6404.kl.dfki.de](mailto:nothnagel@serv-6404.kl.dfki.de)*
+    ```ssh USERNAME[@serv-6404.kl.dfki.de](mailto:nothnagel@serv-6404.kl.dfki.de)```
     
 3. Optional: Check if GPUs are running:
     
-    *srun -K --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh --gpus=8 nvidia-smi*
+    ```srun -K --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh --gpus=8 nvidia-smi```
     
 
 You should see this:
@@ -80,46 +80,49 @@ You have the repo on the remote server to pull changes and run the code with the
 
 # Sending data and files to remote server
 
-We want to store our large raw and processed datasets as well as trained models only on the remote server (remember, that is why we need to specify the gitignore). But first we need to send it the remote server. For this we use *scp.*
+We want to store our large raw and processed datasets as well as trained models only on the remote server (remember, that is why we need to specify the gitignore). But first we need to send it the remote server. For this we use ```scp```.
 
 We want to use our assigned data folders which can be found under:
 
-*cd data/USERNAME* 
+```cd data/USERNAME```
 
 then we may create a sub-folder for datasets such as
 
-*mkdir test_data_folder (rmdir* or *rm -rf* for removal)
+```mkdir test_data_folder (rmdir* or *rm -rf* for removal)```
 
-Then to transfer data from your local machine you must open the *terminal* on your local machine, We may simply use *scp* to send secure copies to the servers. The command is the following:
+Then to transfer data from your local machine you must open the *terminal* on your local machine, We may simply use ```scp``` to send secure copies to the servers. The command is the following:
 
-*scp -r local_file_path ssh destination* 
+```scp -r local_file_path ssh destination```
 
 the destination is the DFKI server and the file path you want to specify, for example using the folder created above it would be:
 
-*ssh* [nothnagel@serv-6404.kl.dfki.de](mailto:nothnagel@serv-6404.kl.dfki.de)*:/data/USERNAME/test_data_folder/*
+```ssh nothnagel@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/```
 
-and the full command would be 
-*scp -r local_file_path ssh USERNAME[@serv-6404.kl.dfki.de](mailto:nothnagel@serv-6404.kl.dfki.de):/data/USERNAME/test_data_folder/*
+and the full command would be
+
+```scp -r local_file_path ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/```
 
 # Understand the remote server structure
 
 Once you are connected you can take a look at the folder structure:
 
-*ls -1*
+```ls -1```
 
 ![container_folder_structure](media/container_folder_structure.png)
 
 To see what pre-installed images contain packages we need we can *grep* them. For example to see all containers that have *pandas* pre-installed you can run:
 
-*grep pandas /data/enroot/*.packages*
+```grep pandas /data/enroot/*.packages```
 
 ![show_images_with_pandas](media/show_images_with_pandas.png)
 
-Now it is important to understand how the interaction between the images, your job and virtual environments. Generally we want to first choose a container and mount it. Whatever we do next is done within this container. 
+Now it is important to understand the interaction between the images, your job and virtual environments. Generally we want to first choose a container and mount it. Whatever we do next is done within this container. 
 This is important since we need to work inside these containers to ensure proper set-up and utilisation of the Nvidia’s GPUs. 
-The default command to mount the latest pytorch image and if you created a costumized data folder *test_folder* to store your datasets would be:
+The default command to mount the latest pytorch image and if you created a customized data folder ```test_folder``` to store your datasets would be:
 
-Here we run a slurm *srun*  command to mount and display all the pre-installed python packages within this container: 
+    TODO
+
+Now, we run a slurm ```srun```  command to mount and display all the pre-installed python packages within this container:
 
 ```
 srun \
@@ -129,7 +132,7 @@ pip3 list
 
 ![display_python_packages](media/display_python_packages.png)
 
-This is only the first few lines, we can see that there are a lot of preinstalled python packages. In the ideal case all your requirements and dependencies are already installed. Otherwise we will need to install additional dependancies for example with *pip install -r requirements.txt.* But this will be covered later.
+This is only the first few lines, we can see that there are a lot of preinstalled python packages. In the ideal case all your requirements and dependencies are already installed. Otherwise we will need to install additional dependancies for example with ```pip install -r requirements.txt``` But this will be covered later.
 
 # Running your code
 
@@ -137,7 +140,7 @@ Now we can do what we came for: Running our code on the remote server and utilis
 
 [https://github.com/jonas-nothnagel/sdg_text_classification](https://github.com/jonas-nothnagel/sdg_text_classification) 
 
-As explained above, connect to the remote server and *git clone* the repo into /data/USERNAME/
+As explained above, connect to the remote server and ```git clone``` the repo into ```/data/USERNAME/```.
 
 First, let’s simply compile a python script without GPU support.  Again, mount the container of your choice, but also specify where the Repository lies on the remote server. Since this is the place where we pushed all the code beforehand: here for example “sdg_text_classification”.
 
@@ -151,17 +154,15 @@ srun \
   python ./src/test.py
 ```
 
-Bashing
+## Bashing
 
-Now it is good practice to not copy paste these code lines into the terminal directly but to write a **[bash script](https://github.com/jonas-nothnagel/sdg_text_classification/blob/main/run_example.sh)** and compile it with
-
-*bash run_example.sh*
+Now it is good practice to not copy paste these code lines into the terminal directly but to write a **[bash script](https://github.com/jonas-nothnagel/sdg_text_classification/blob/main/run_example.sh)** and compile it with ```bash run_example.sh```.
 
 ```bash
 #!/bin/bash
 srun \
   --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh \
-  --container-workdir="`pwd`" \
+  --container-workdir=`pwd` \
   --container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification \
   python ./src/test.py
 ```
