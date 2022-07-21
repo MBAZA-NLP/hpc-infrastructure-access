@@ -4,13 +4,13 @@ Before you get started with running your code and training models you need to so
 
 1. Set-up and connect to the **DFKI VPN**. Create your account following this guideline:
     
-    [VPN_overview (2).pdf](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/VPN_overview_(2).pdf)
+    [DFKI VPN_overview.pdf](https://github.com/MBAZA-NLP/hpc-infrastructure-access/raw/main/media/DFKI%20VPN_overview.pdf)
     
-    ![Untitled](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/Untitled.png)
+    ![VPN](media/vpn.png)
     
 2. Create your computing cluster account following this guideline:
     
-    [DFKI Compute Cluster Access (2).docx](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/DFKI_Compute_Cluster_Access_(2).docx)
+    [DFKI Compute Cluster Access.docx](https://github.com/MBAZA-NLP/hpc-infrastructure-access/raw/main/media/DFKI%20Compute%20Cluster%20Access.pdf)
     
 
 After this you should have following credentials:
@@ -36,7 +36,7 @@ Now we can connect to the remote Server. Note that the server runs on Linux, so 
 
 You should see this:
 
-![Untitled](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/Untitled%201.png)
+![check_gpus_running](media/check_gpus_running.png)
 
 # Overview of components
 
@@ -48,7 +48,7 @@ Usually we will work with three components:
 
 Below you find an example visualisation how these components work with each other and interact. 
 
-![Untitled](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/Untitled%202.png)
+![components_overview](media/components_overview.png)
 
 # Set-up your development environments:
 
@@ -107,13 +107,13 @@ Once you are connected you can take a look at the folder structure:
 
 *ls -1*
 
-![Untitled](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/Untitled%203.png)
+![container_folder_structure](media/container_folder_structure.png)
 
 To see what pre-installed images contain packages we need we can *grep* them. For example to see all containers that have *pandas* pre-installed you can run:
 
 *grep pandas /data/enroot/*.packages*
 
-![Untitled](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/Untitled%204.png)
+![show_images_with_pandas](media/show_images_with_pandas.png)
 
 Now it is important to understand how the interaction between the images, your job and virtual environments. Generally we want to first choose a container and mount it. Whatever we do next is done within this container. 
 This is important since we need to work inside these containers to ensure proper set-up and utilisation of the Nvidia’s GPUs. 
@@ -127,7 +127,7 @@ srun \
 pip3 list
 ```
 
-![Untitled](Documentation%20-%20Getting%20Started%204738c2f2337843e9bcc150bb22dd1212/Untitled%205.png)
+![display_python_packages](media/display_python_packages.png)
 
 This is only the first few lines, we can see that there are a lot of preinstalled python packages. In the ideal case all your requirements and dependencies are already installed. Otherwise we will need to install additional dependancies for example with *pip install -r requirements.txt.* But this will be covered later.
 
