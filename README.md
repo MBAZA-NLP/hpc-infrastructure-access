@@ -4,13 +4,13 @@ Before you get started with running your code and training models you need to so
 
 1. Set-up and connect to the **DFKI VPN**. Create your account following this guideline:
     
-    [DFKI VPN_overview.pdf](https://github.com/MBAZA-NLP/hpc-infrastructure-access/raw/main/media/DFKI%20VPN_overview.pdf)
+    [DFKI VPN_overview.pdf](https://github.com/MBAZA-NLP/hpc-infrastructure-access/blob/main/media/DFKI%20VPN_overview.pdf)
     
     ![VPN](media/vpn.png)
     
 2. Create your computing cluster account following this guideline:
     
-    [DFKI Compute Cluster Access.docx](https://github.com/MBAZA-NLP/hpc-infrastructure-access/raw/main/media/DFKI%20Compute%20Cluster%20Access.pdf)
+    [DFKI Compute Cluster Access.pdf](https://github.com/MBAZA-NLP/hpc-infrastructure-access/blob/main/media/DFKI%20Compute%20Cluster%20Access.pdf)
     
 
 After this you should have following credentials:
