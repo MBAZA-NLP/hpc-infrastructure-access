@@ -68,7 +68,9 @@ Now we can connect to the remote Server. Note that the server runs on Linux, so 
 1. Connect to the DFKI VPN.
 2. Open terminal on your local machine and ```ssh``` into remote server using your Computing Cluster Credentials (username and password):
     
-    ```ssh USERNAME@serv-6404.kl.dfki.de```
+    ``` bash
+    ssh USERNAME@serv-6404.kl.dfki.de
+    ```
 3. (Optional) Check available hardware resources and information about the cluster:
 Here are some additional commands to get information about the computing cluster:
 
@@ -99,14 +101,18 @@ In the table of queued jobs, ```R``` stands for running and ```PD``` for pending
 
 To check if GPUs are running:
     
-  ```usrun.sh --gpus=8 nvidia-smi```
+``` bash
+usrun.sh --gpus=8 nvidia-smi
+```
     
 You should see this:
 
 ![check_gpus_running](media/check_gpus_running.png)
 
 ### Attach and detach, screen
-```sattach <jobid>.0```
+``` bash
+sattach <jobid>.0
+```
 
 Screen
 | Description | Command |
@@ -122,13 +128,17 @@ see also: https://linuxize.com/post/how-to-use-linux-screen/
 
 Once you are connected you can take a look at the folder structure:
 
-```ls -1```
+``` bash
+ls -1
+```
 
 ![container_folder_structure](media/container_folder_structure.png)
 
 To see what pre-installed images contain packages we need we can *grep* them. For example to see all containers that have ```pandas``` pre-installed you can run:
 
-```grep pandas /data/enroot/*.packages```
+``` bash
+grep pandas /data/enroot/*.packages
+```
 
 ![show_images_with_pandas](media/show_images_with_pandas.png)
 
@@ -156,23 +166,34 @@ We want to store our large raw and processed datasets as well as trained models 
 
 We want to use our assigned data folders which can be found under:
 
-```cd data/USERNAME```
+``` bash
+cd data/USERNAME
+```
 
 then we may create a sub-folder for datasets such as
 
-```mkdir test_data_folder``` (```rmdir``` or ```rm -rf``` for removal)
+``` bash
+mkdir test_data_folder
+```
+(use ```rmdir``` or ```rm -rf``` for removal)
 
 Then to transfer data from your local machine you must open the *terminal* on your local machine, We may simply use ```scp``` to send secure copies to the servers. The command is the following:
 
-```scp -r local_file_path ssh destination```
+``` bash
+scp -r local_file_path ssh destination
+```
 
 the destination is the DFKI server and the file path you want to specify, for example using the folder created above it would be:
 
-```ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/```
+``` bash
+ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/
+```
 
 and the full command would be
 
-```scp -r local_file_path ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/```
+``` bash
+scp -r local_file_path ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/
+```
 
 ## Set up your execution environment
 Often, you have an environment specification in form of a Conda ```environment.yml``` or a ```pip requirements.txt```.
@@ -247,17 +268,23 @@ python3 -u -c "import torch; print(f'PyTorch {torch.__version__}')"
 
 
 ### Create new Image from Container
-```usrun.sh --container-save=/data/steffen/my-image.sqsh --pty bash```
+``` bash
+usrun.sh --container-save=/data/steffen/my-image.sqsh --pty bash
+```
 
 ### Getting more Images
 Docker images can be imported from DockerHub (https://hub.docker.com/) or Nvidia (https://ngc.nvidia.com/catalog/containers).
 
 #### Example: Import Alpine image to Enroot from *DockerHub*
 Original Docker command (DON'T RUN THIS):
-```docker pull alpine:latest```
+``` bash
+docker pull alpine:latest
+```
 
 Enroot import command:
-```enroot import docker://alpine:latest```
+``` bash
+enroot import docker://alpine:latest
+```
 
 #### Example: Import Cuda image from *Nvidia Catalog*
 Original Docker command (DON'T RUN THIS):
