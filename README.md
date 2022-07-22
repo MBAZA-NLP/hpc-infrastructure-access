@@ -196,9 +196,9 @@ Create and test Conda environment:
 ``` bash
 conda env create -f /home/steffen/demos/environment.yml
 conda activate demo
-python -u -c "import faiss; print(f'FAISS {faiss.__version__}')"
+python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
 ```
--> should print 1.7.2
+-> should print ```PyTorch 1.12```
 
 Activate Conda environment in container:
   can be run on images without any Conda installation,
@@ -210,10 +210,10 @@ Activate Conda environment in container:
 # activate local Conda environment
 . /data/steffen/miniconda/etc/profile.d/conda.sh
 conda activate demo
-python -u -c "import faiss; print(f'FAISS {faiss.__version__}')"
+python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
 ```
 
-#### Solution 2: Install Conda in container and create environment:
+#### Solution 2: Install Conda in container and create environment
 For example use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` --> ```usrun.sh ./demos/local-conda-env-demo.sh```
 
 ``` bash
@@ -227,7 +227,7 @@ chmod a+x Miniconda3-py38_4.12.0-Linux-x86_64.sh
 . /usr/local/miniconda/etc/profile.d/conda.sh
 conda env create -f /home/steffen/demos/environment.yml
 conda activate demo
-python -u -c "import faiss; print(f'FAISS {faiss.__version__}')"
+python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
 ```
 
 ### Scenario 2: Pip requirements.txt
@@ -240,7 +240,7 @@ For example, use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime
 apt update
 apt install -y python3 python3-pip
 pip install -r /home/steffen/demos/requirements.txt
-python3 -u -c "import faiss; print(f'FAISS {faiss.__version__}')"
+python3 -u -c "import torch; print(f'PyTorch {torch.__version__}')"
 ```
 
 **Recommendation**: Try to find an image that contains your main ML framework and only install missing libraries at startup.
