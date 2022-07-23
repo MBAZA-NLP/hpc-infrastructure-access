@@ -33,7 +33,7 @@ Below you find an example visualisation how these components work with each othe
 
 ![components_overview](media/components_overview.png)
 
-## Set-up your development environments
+## Set up your development environments
 
 Before jumping in the fun part - model training - we should take some time to properly set-up and connect the components mentioned above. The following steps are only one way to do it. Feel free to do it as it works best for you!
 
@@ -72,7 +72,6 @@ Now we can connect to the remote Server. Note that the server runs on Linux, so 
     ssh USERNAME@serv-6404.kl.dfki.de
     ```
 3. (Optional) Check available hardware resources and information about the cluster:
-Here are some additional commands to get information about the computing cluster:
 
     | Description |Command|
     |---|---|
@@ -81,14 +80,26 @@ Here are some additional commands to get information about the computing cluster
     | Check disk usage of each sub-directory | ```du -hsx $(ls -A) \| sort -rh``` |
     | Infos about the computing cluster | ```sinfo``` or ```clusterinfo``` |
 
-## Basics of scheduling and executing jobs
-- Slurm
-- usrun.sh user script
-- Interactive session
-- ```scancel <job-id>``` or ctrl-c ctrl-c in output console
+## Understand the cluster architecture
+- Login node
+- File system (home, data, enroot)
+- Containers
+- [Slurm](https://slurm.schedmd.com/)
 
-### Slurm job queue
-Resource allocation basics
+![giz_cluster_structure](media/giz_cluster_structure.png)
+
+Once you are connected you can take a look at the folder structure:
+
+``` bash
+ls -1
+```
+
+![container_folder_structure](media/container_folder_structure.png)
+
+## Scheduling and running jobs
+- ```srun``` and its parameters
+
+- Job queue and resource allocation (full resources needed, allocated to jobs that fit, not chronologically)
 
 You can also check which jobs are currently running or next in line (**job queue**):
 | Description |Command|
@@ -99,6 +110,8 @@ You can also check which jobs are currently running or next in line (**job queue
 
 In the table of queued jobs, ```R``` stands for running and ```PD``` for pending.
 
+- usrun.sh user script
+
 To check if GPUs are running:
     
 ``` bash
@@ -108,6 +121,9 @@ usrun.sh --gpus=8 nvidia-smi
 You should see this:
 
 ![check_gpus_running](media/check_gpus_running.png)
+
+- Interactive session
+- ```scancel <job-id>``` or ctrl-c ctrl-c in output console
 
 ### Attach and detach, screen
 ``` bash
@@ -124,16 +140,14 @@ Screen
 
 see also: https://linuxize.com/post/how-to-use-linux-screen/
 
-## Understand the remote server structure
+## Set up your execution environment
+For Machine Learning workloads, you will need a set of packages such as Pandas, PyTorch, TensorFlow or scikit-learn. Depending on what you need, you have to take different steps to set up your execution environment:
+- Ideally, there is already an image available with all packages you need: [Use a ready-made image](#use-a-ready-made-image)
+- If you use a Conda ```environment.yml``` file: [See here](#using-conda-environmentyml)
+- If you use a pip ```requirements.txt```: [See here](#install-packages-into-the-container-with-pip-requirementstxt)
+- If you want to use a Docker image available online: [Use an image from Docker Hub or Nvidia](#use-images-from-docker-hub-or-nvidia)
 
-Once you are connected you can take a look at the folder structure:
-
-``` bash
-ls -1
-```
-
-![container_folder_structure](media/container_folder_structure.png)
-
+### Use a ready-made image
 To see what pre-installed images contain packages we need we can *grep* them. For example to see all containers that have ```pandas``` pre-installed you can run:
 
 ``` bash
@@ -142,8 +156,8 @@ grep pandas /data/enroot/*.packages
 
 ![show_images_with_pandas](media/show_images_with_pandas.png)
 
-Now it is important to understand the interaction between the images, your job and virtual environments. Generally we want to first choose a container and mount it. Whatever we do next is done within this container. 
-This is important since we need to work inside these containers to ensure proper set-up and utilisation of the Nvidia’s GPUs. 
+Now it is important to understand the interaction between the images, your job and virtual environments. Generally we want to first choose a container and mount it. Whatever we do next is done within this container.
+This is important since we need to work inside these containers to ensure proper set-up and utilization of the Nvidia’s GPUs. 
 The default command to mount the latest pytorch image and if you created a customized data folder ```test_folder``` to store your datasets would be:
 
     TODO
@@ -158,9 +172,122 @@ pip3 list
 
 ![display_python_packages](media/display_python_packages.png)
 
-This is only the first few lines, we can see that there are a lot of preinstalled python packages. In the ideal case all your requirements and dependencies are already installed. Otherwise we will need to install additional dependancies for example with ```pip install -r requirements.txt``` But this will be covered later.
+This is only the first few lines, we can see that there are a lot of preinstalled python packages. In the ideal case all your requirements and dependencies are already installed and you can simply choose a ready-made image.
+
+### Using Conda ```environment.yml```
+
+#### Solution 1: Install environment locally and make it available in container
+
+Miniconda: see https://docs.conda.io/en/latest/miniconda.html#linux-installers
+
+``` bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh
+chmod a+x *.sh
+./Miniconda3-py39_4.12.0-Linux-x86_64.sh
+```
+
+IMPORTANT: Set the installation location to ```/data/USERNAME/miniconda```. By default, conda will install to your ```/home/USERNAME/``` folder, which is not meant for large installations since it is too small.
+
+Create and test Conda environment:
+
+``` bash
+conda env create -f /home/steffen/demos/environment.yml
+conda activate demo
+python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
+# prints PyTorch 1.12
+```
+
+Activate Conda environment in container:
+
+Can be run on images without any Conda installation,
+e.g. use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` 
+```usrun.sh ./demos/local-conda-env-demo.sh```
+
+``` bash
+#!/bin/sh
+# activate local Conda environment
+. /data/steffen/miniconda/etc/profile.d/conda.sh
+conda activate demo
+python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
+# prints PyTorch 1.12
+```
+
+#### Solution 2: Install Conda in container and create environment
+For example use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` --> ```usrun.sh ./demos/local-conda-env-demo.sh```
+
+``` bash
+#!/bin/bash
+apt update
+apt install -y wget
+cd /usr/local
+wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh
+chmod a+x Miniconda3-py38_4.12.0-Linux-x86_64.sh
+./Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /usr/local/miniconda
+. /usr/local/miniconda/etc/profile.d/conda.sh
+conda env create -f /home/steffen/demos/environment.yml
+conda activate demo
+python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
+```
+
+### Install packages into the container with ```pip requirements.txt```
+In this case, install Python and pip in the container and create environment.
+
+For example, use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` --> ```usrun.sh ./demos/container-install-demo-pip.sh```.
+
+``` bash
+#!/bin/bash
+apt update
+apt install -y python3 python3-pip
+pip install -r /home/steffen/demos/requirements.txt
+python3 -u -c "import torch; print(f'PyTorch {torch.__version__}')"
+```
+
+**Recommendation**: Try to find an image that contains your main ML framework and only install missing libraries at startup.
+
+### Use images from Docker Hub or Nvidia
+Docker images can be imported from Docker Hub (https://hub.docker.com/) or Nvidia (https://ngc.nvidia.com/catalog/containers).
+
+#### Example: Import Alpine image to Enroot from *Docker Hub*
+Original Docker command (DON'T RUN THIS):
+``` bash
+docker pull alpine:latest
+```
+
+Enroot import command:
+``` bash
+enroot import docker://alpine:latest
+```
+
+#### Example: Import Cuda image from *Nvidia Catalog*
+Original Docker command (DON'T RUN THIS):
+    
+    docker pull nvcr.io/nvidia/cuda:11.2.1-base-ubuntu20.04
+
+Enroot import command:
+replace the first / with # from enroot import
+
+    enroot import docker://nvcr.io#nvidia/cuda:11.2.1-base-ubuntu20.04
+
+**Attention 1!** This creates large files in the cache (```$HOME/.cache/enroot```). Clean up afterwards!
+
+**Attention 2!** Using Nvidia requires an Nvidia account and an API key!
+API key can be generated here:
+https://ngc.nvidia.com/setup/api-key.
+To configure Enroot for using your API key, create
+```enroot/.credentials``` within your ```$HOME``` and
+append the following line to it:
+
+    machine nvcr.io login $oauthtoken password <API_KEY>
+
+### Save the new image from Container
+Once you the image in the container is ready and you have made all changes you wanted, you can save the image permanently to be able to reuse it later:
+
+``` bash
+usrun.sh --container-save=/data/steffen/my-image.sqsh --pty bash
+```
 
 ## Sending data and files to remote server
+Another important requirement for running Machine Learning workloads is to have the training and test data readily available on the server. 
 
 We want to store our large raw and processed datasets as well as trained models only on the remote server (remember, that is why we need to specify the gitignore). But first we need to send it the remote server. For this we use [```scp```](https://www.ionos.com/digitalguide/server/configuration/linux-scp-command/).
 
@@ -195,119 +322,8 @@ and the full command would be
 scp -r local_file_path ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_data_folder/
 ```
 
-## Set up your execution environment
-Often, you have an environment specification in form of a Conda ```environment.yml``` or a ```pip requirements.txt```.
 
-### Scenario 1: Conda environment.yml
-
-#### Solution 1: Install environment locally and make it available in container
-
-Miniconda: see https://docs.conda.io/en/latest/miniconda.html#linux-installers
-
-``` bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh
-chmod a+x *.sh
-./Miniconda3-py39_4.12.0-Linux-x86_64.sh
-```
-
-Remember to set the installation location to ```/data/USERNAME/miniconda```! (why is this important)
-
-Create and test Conda environment:
-
-``` bash
-conda env create -f /home/steffen/demos/environment.yml
-conda activate demo
-python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
-```
--> should print ```PyTorch 1.12```
-
-Activate Conda environment in container:
-  can be run on images without any Conda installation,
-  e.g. use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` 
-```usrun.sh ./demos/local-conda-env-demo.sh```
-
-``` bash
-#!/bin/sh
-# activate local Conda environment
-. /data/steffen/miniconda/etc/profile.d/conda.sh
-conda activate demo
-python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
-```
-
-#### Solution 2: Install Conda in container and create environment
-For example use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` --> ```usrun.sh ./demos/local-conda-env-demo.sh```
-
-``` bash
-#!/bin/bash
-apt update
-apt install -y wget
-cd /usr/local
-wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh
-chmod a+x Miniconda3-py38_4.12.0-Linux-x86_64.sh
-./Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /usr/local/miniconda
-. /usr/local/miniconda/etc/profile.d/conda.sh
-conda env create -f /home/steffen/demos/environment.yml
-conda activate demo
-python -u -c "import torch; print(f'PyTorch {torch.__version__}')"
-```
-
-### Scenario 2: Pip requirements.txt
-In this case, install Python and pip in the container and create environment.
-
-For example, use image ```/data/enroot/nvcr.io+nvidia+cuda+11.6.2-cudnn8-runtime-ubuntu20.04.sqsh``` --> ```usrun.sh ./demos/container-install-demo-pip.sh```.
-
-``` bash
-#!/bin/bash
-apt update
-apt install -y python3 python3-pip
-pip install -r /home/steffen/demos/requirements.txt
-python3 -u -c "import torch; print(f'PyTorch {torch.__version__}')"
-```
-
-**Recommendation**: Try to find an image that contains your main ML framework and only install missing libraries at startup.
-
-
-### Create new Image from Container
-``` bash
-usrun.sh --container-save=/data/steffen/my-image.sqsh --pty bash
-```
-
-### Getting more Images
-Docker images can be imported from DockerHub (https://hub.docker.com/) or Nvidia (https://ngc.nvidia.com/catalog/containers).
-
-#### Example: Import Alpine image to Enroot from *DockerHub*
-Original Docker command (DON'T RUN THIS):
-``` bash
-docker pull alpine:latest
-```
-
-Enroot import command:
-``` bash
-enroot import docker://alpine:latest
-```
-
-#### Example: Import Cuda image from *Nvidia Catalog*
-Original Docker command (DON'T RUN THIS):
-    
-    docker pull nvcr.io/nvidia/cuda:11.2.1-base-ubuntu20.04
-
-Enroot import command:
-replace the first / with # from enroot import
-
-    enroot import docker://nvcr.io#nvidia/cuda:11.2.1-base-ubuntu20.04
-
-**Attention 1!** This creates large files in the cache (```$HOME/.cache/enroot```). Clean up afterwards!
-
-**Attention 2!** Using Nvidia requires an Nvidia account and an API key!
-API key can be generated here:
-https://ngc.nvidia.com/setup/api-key.
-To configure Enroot for using your API key, create
-```enroot/.credentials``` within your ```$HOME``` and
-append the following line to it:
-
-    machine nvcr.io login $oauthtoken password <API_KEY>
-
-## Running your code
+## Working example
 Now we can do what we came for: Running our code on the remote server and utilising the GPUs. Let’s use this repo as an example:
 
 [https://GitHub.com/jonas-nothnagel/sdg_text_classification](https://GitHub.com/jonas-nothnagel/sdg_text_classification) 
@@ -316,19 +332,25 @@ As explained above, connect to the remote server and ```git clone``` the repo in
 
 First, let’s simply compile a python script without GPU support.  Again, mount the container of your choice, but also specify where the Repository lies on the remote server. Since this is the place where we pushed all the code beforehand: here for example “sdg_text_classification”.
 
-We choose the newest pytorch container:
+We choose the newest pytorch container (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```) and run our training script (```./src/train.py```) using 8 GPUs:
 
 ```bash
-srun \
-  --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh \
-  --container-workdir="`pwd`" \
-  --container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification \
-  python ./src/test.py
+srun -K --gpus=8 -p batch  \
+--container-workdir=`pwd`  \
+--container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
+--container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
+python ./src/train.py
 ```
+
+It is possible that you run into an error here:
+
+    ERROR: The GPUs have to be specified correctly still.
+
+If this happens, consult [http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/docs/slurm-cluster/resource-allocation/](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/docs/slurm-cluster/resource-allocation/).
 
 ### Bashing
 
-Now it is good practice to not copy paste these code lines into the terminal directly but to write a **[bash script](https://GitHub.com/jonas-nothnagel/sdg_text_classification/blob/main/run_example.sh)** and compile it with ```bash run_example.sh```.
+It is good practice to not copy paste these code lines into the terminal directly but to write a **[bash script](https://GitHub.com/jonas-nothnagel/sdg_text_classification/blob/main/run_example.sh)** and compile it with ```bash run_example.sh```.
 
 ```bash
 #!/bin/bash
@@ -346,27 +368,6 @@ We want to do this because in the bash script we can specify the whole job, incl
 - specifying the GPU support
 - specifying experiment tracking and where to put results etc.
 
-## Minimal working example
-
-Let’s run the minimal working example with support of 8 GPUs:
-
-```bash
-srun -K -N1 --gpus=8 --cpus-per-task=4 -p batch  \
---container-workdir=`pwd`  \
---container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
---container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
-python ./src/test.py
-```
-
-Let’s train our model using the train function and installing dependencies directly from the python script:
-
-ERROR: The GPUs have to be specified correctly still. This runs into an error for GPU setup.  consult: [http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/docs/slurm-cluster/resource-allocation/](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/docs/slurm-cluster/resource-allocation/)
-
-```bash
-#!/bin/bash
-srun -K --gpus=8 -p batch  \
---container-workdir=`pwd`  \
---container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
---container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
-python ./src/train.py
-```
+## Further reading
+- [DFKI HPC Cluster documentation](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/)
+    - Careful: Not everything applies.
