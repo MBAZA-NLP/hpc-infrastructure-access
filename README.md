@@ -81,38 +81,56 @@ Now we can connect to the remote Server. Note that the server runs on Linux, so 
     | Infos about the computing cluster | ```sinfo``` or ```clusterinfo``` |
 
 ## Understand the cluster architecture
-- Login node
-- File system (home, data, enroot)
-- Containers
-- [Slurm](https://slurm.schedmd.com/)
+The figure below shows the most important parts of the DFKI computing cluster.
 
 ![giz_cluster_structure](media/giz_cluster_structure.png)
 
-Once you are connected you can take a look at the folder structure:
+By [connecting to the cluster](#connect-to-the-remote-server), you have already made acquiantance with the **login node** (```serv-6404.kl.dfki.de```).
 
-``` bash
-ls -1
-```
+Next is the **file system** of the cluster. There are three important directories:
+- The ```home``` directory is relatively small at 20 GB shared across all users. It is only meant for scripts and configuration files. *Do not store large files here*. Also, be careful since this is often the default install location for large packages such as Conda, so make sure to change the path during installation.
+- The ```data``` directory is 7 TB large, again shared across users. It is intended for projects with data, checkpoints, logs, etc.
+- the ```/data/enroot``` directory is where you store [Enroot](https://github.com/NVIDIA/enroot/blob/master/README.md) images.
 
-![container_folder_structure](media/container_folder_structure.png)
+To schedule and manage workloads/jobs, the cluster uses the **[Slurm Resource Manager](https://slurm.schedmd.com/)**. It allows you to submit jobs, which will then be run as soon as the required resources are available.
+
+All Slurm jobs run in **[containers](https://www.ibm.com/cloud/learn/containerization)**. Containers are predefined, isolated runtime environments which are used for exactly one job and then discarded. They enable the parallel execution of multiple workloads on one GPU node without interference. Containers are created (instantiated) from images which are like blueprints specifying the kind of software packages that should be available in the container. This is powered by **[Enroot](https://github.com/NVIDIA/enroot/blob/master/README.md)**, an alternative to the well-known Docker. While containers are in principle isolated, it is possible to share directories from the main file system with the container by *mounting* them. This allows the workload inside the container (e. g. training a machine learning model) to access files such as training data sets from the main file system.
+
+![mounting_file_system_to_container](media/mounting_file_system_to_container.png)
 
 ## Scheduling and running jobs
-- ```srun``` and its parameters
+We will now look at some commands that allow you to run jobs on the cluster. Since Slurm is used as the resource manager, all command begin with an *s*.
 
-- Job queue and resource allocation (full resources needed, allocated to jobs that fit, not chronologically)
+### ```srun``` command
+```srun``` is used to schedule a job. This is the syntax of the command:
 
-You can also check which jobs are currently running or next in line (**job queue**):
-| Description |Command|
-|---|---|
-| Check queued jobs | ```squeue``` |
-| Check your own queued jobs | ```squeue -u <your-user-name>``` |
-| Get table of queued jobs | ```squeue -t R -O JobID:8,UserName:12,tres:60``` |
+``` bash
+srun --container-mounts=/data:/data,$HOME:$HOME \
+--container-workdir=$PWD \
+--container-image=/data/enroot/my-enroot-image.sqsh \
+--gpus=4 \
+--mem=128GB \
+--cpus-per-task=32 \
+my-executable-to-run-in-container.sh
+```
 
-In the table of queued jobs, ```R``` stands for running and ```PD``` for pending.
+The arguments have the following meanings:
 
-- usrun.sh user script
+|Argument|Description|
+|-|-|
+|```--container-mounts```|Used to mount directories into the container. Format: ```<dir-on-host>:<dir-in-container>```. If you want to mount several directories, separate them with commas.|
+|```--container-workdir```|Working directory in the container. The variable ```$PWD``` refers to the current directory.|
+|```--container-image```|Path to the Enroot image from which to create the container.|
+|```--gpus```|Number of GPUs to request for the job (default when not specified is 0).|
+|```--mem```|Size of CPU memory to request for the job (default: 16 GB).|
+|```--cpus-per-task```|Number of CPUs to request for the job per task (default: 2). The number of tasks is always 1.|
 
-To check if GPUs are running:
+Finally, ```my-executable-to-run-in-container.sh``` is the executable you would like to run on the cluster.
+
+#### ```usrun.sh```
+To make it a bit easier to schedule jobs, a convenience script is provided at ```/home/steffen/bin/usrun.sh```. Copy this file to your ```/bin``` directory and add it to your ```$PATH``` in ```~/.bashrc```.
+
+Then, you can use this to run jobs. Here is an example to check if GPUs are running (using the ```nvidia-smi``` command):
     
 ``` bash
 usrun.sh --gpus=8 nvidia-smi
@@ -122,23 +140,51 @@ You should see this:
 
 ![check_gpus_running](media/check_gpus_running.png)
 
-- Interactive session
-- ```scancel <job-id>``` or ctrl-c ctrl-c in output console
+### Job queue (```squeue```)
+To check which jobs are currently running or next in line:
 
-### Attach and detach, screen
+| Description |Command|
+|---|---|
+| Check queued jobs | ```squeue``` |
+| Check your own queued jobs | ```squeue -u <your-user-name>``` |
+| Get table of queued jobs (note that the ```-O``` argument is used for formatting options) | ```squeue -t R -O JobID:8,UserName:12,tres:60``` |
+
+In the table of queued jobs, ```R``` stands for running and ```PD``` for pending.
+
+### Interactive sessions
+You can also run interactive sessions.
+
+    usrun.sh --gpus=1 --pty bash
+
+Use the ```--time``` argument to make sure the job automatically ends after ```x``` minutes, otherwise you will block resources for everybody else trying to access the cluster:
+
+    usrun.sh --gpus=1 --time=60 --pty bash
+
+### Kill jobs
+To stop running robs, execute
+    
+    scancel <job-id>
+    
+or press ```ctrl-c``` twice in the output console.
+
+### See outputs of a job
+To see the outputs of a running job, use the ```sattach``` command, where you specify the job ID whose output you would like to see.
+
 ``` bash
+usrun.sh --time=10 ./demos/output-demo.sh
+squeue
 sattach <jobid>.0
 ```
 
-Screen
+### Attach and detach, screen
+Imagine you want to use the console for something else, but a job with an output is still running. The solution is to use a [screen](https://linuxize.com/post/how-to-use-linux-screen/) to detach from the running output, and to reattach later.
+
 | Description | Command |
 |---|---|
 | Create screen | ```screen``` |
 | Detach running screen | ```Ctrl-a Ctrl-d``` |
 | Show existing screens | ```screen -ls``` |
 | Attach to running screen | ```screen -r``` |
-
-see also: https://linuxize.com/post/how-to-use-linux-screen/
 
 ## Set up your execution environment
 For Machine Learning workloads, you will need a set of packages such as Pandas, PyTorch, TensorFlow or scikit-learn. Depending on what you need, you have to take different steps to set up your execution environment:
