@@ -194,7 +194,7 @@ For Machine Learning workloads, you will need a set of packages such as Pandas, 
 - If you want to use a Docker image available online: [Use an image from Docker Hub or Nvidia](#use-images-from-docker-hub-or-nvidia)
 
 ### Use a ready-made image
-To see what pre-installed images contain packages we need we can *grep* them. For example to see all containers that have ```pandas``` pre-installed you can run:
+To see what pre-installed images contain packages we need, we can use ```grep```. For example, to see all containers that have ```pandas``` pre-installed you can run:
 
 ``` bash
 grep pandas /data/enroot/*.packages
@@ -202,19 +202,15 @@ grep pandas /data/enroot/*.packages
 
 ![show_images_with_pandas](media/show_images_with_pandas.png)
 
-Now it is important to understand the interaction between the images, your job and virtual environments. Generally we want to first choose a container and mount it. Whatever we do next is done within this container.
-This is important since we need to work inside these containers to ensure proper set-up and utilization of the Nvidia’s GPUs. 
-The default command to mount the latest pytorch image and if you created a customized data folder ```test_folder``` to store your datasets would be:
-
-    TODO
-
-Now, we run a slurm ```srun```  command to mount and display all the pre-installed python packages within this container:
+For training a machine learning model, you may for example use the PyTorch image ```nvcr.io_nvidia_pytorch_22.05-py3.sqsh```. To display all the pre-installed python packages within this container:
 
 ```
 srun \
   --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh \
 pip3 list
 ```
+
+This is the output:
 
 ![display_python_packages](media/display_python_packages.png)
 
@@ -309,8 +305,7 @@ Original Docker command (DON'T RUN THIS):
     
     docker pull nvcr.io/nvidia/cuda:11.2.1-base-ubuntu20.04
 
-Enroot import command:
-replace the first / with # from enroot import
+Enroot import command (replace the first ```/``` in the URL of the Docker command with ```#```):
 
     enroot import docker://nvcr.io#nvidia/cuda:11.2.1-base-ubuntu20.04
 
@@ -374,45 +369,34 @@ Now we can do what we came for: Running our code on the remote server and utilis
 
 [https://GitHub.com/jonas-nothnagel/sdg_text_classification](https://GitHub.com/jonas-nothnagel/sdg_text_classification) 
 
-As explained above, connect to the remote server and ```git clone``` the repo into ```/data/USERNAME/```.
+As explained [above](#recommended-workflow), [connect to the remote server](#connect-to-the-remote-server) and ```git clone``` the repo into ```/data/USERNAME/```.
 
-First, let’s simply compile a python script without GPU support.  Again, mount the container of your choice, but also specify where the Repository lies on the remote server. Since this is the place where we pushed all the code beforehand: here for example “sdg_text_classification”.
-
-We choose the newest pytorch container (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```) and run our training script (```./src/train.py```) using 8 GPUs:
-
-```bash
-srun -K --gpus=8 -p batch  \
---container-workdir=`pwd`  \
---container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
---container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
-python ./src/train.py
-```
-
-It is possible that you run into an error here:
-
-    ERROR: The GPUs have to be specified correctly still.
-
-If this happens, consult [http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/docs/slurm-cluster/resource-allocation/](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/docs/slurm-cluster/resource-allocation/).
-
-### Bashing
-
-It is good practice to not copy paste these code lines into the terminal directly but to write a **[bash script](https://GitHub.com/jonas-nothnagel/sdg_text_classification/blob/main/run_example.sh)** and compile it with ```bash run_example.sh```.
+First, let’s create a bash script that we will name ```job.sh```. This sets up our environment using pip ```requirements.txt``` (as described [above](#install-packages-into-the-container-with-pip-requirementstxt)):
 
 ```bash
 #!/bin/bash
-srun \
-  --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh \
-  --container-workdir=`pwd` \
-  --container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification \
-  python ./src/test.py
+pip install -r requirements.txt
+python ./src/train.py 
 ```
 
-We want to do this because in the bash script we can specify the whole job, including:
+This is a minimal example, but in the script we could specify the whole job, including:
 
 - Creating/activating a virtual environment if necessary
 - installing additional dependencies
 - specifying the GPU support
 - specifying experiment tracking and where to put results etc.
+
+Next, compile the bash script with ```bash job.sh```.
+
+Now, we will execute this bash script using a PyTorch image (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```), 8 GPUs and 24 GB of RAM. We also mount the directory of the repository on the remote server (```/data/nothnagel/sdg_text_classification```):
+
+``` bash
+srun -K --gpus=8 --mem24GB -p batch  \
+--container-workdir=`pwd`  \
+--container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
+--container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
+job.sh
+```
 
 ## Further reading
 - [DFKI HPC Cluster documentation](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/)
