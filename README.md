@@ -388,10 +388,10 @@ This is a minimal example, but in the script we could specify the whole job, inc
 
 Next, compile the bash script with ```bash job.sh```.
 
-Now, we will execute this bash script using a PyTorch image (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```), 8 GPUs and 24 GB of RAM. We also mount the directory of the repository on the remote server (```/data/nothnagel/sdg_text_classification```):
+Now, we will execute this bash script using a PyTorch image (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```), 1 GPU and 24 GB of RAM. We also mount the directory of the repository on the remote server (```/data/nothnagel/sdg_text_classification```):
 
 ``` bash
-srun -K --gpus=8 --mem24GB -p batch  \
+srun -K --gpus=1 --mem24GB -p batch  \
 --container-workdir=`pwd`  \
 --container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
 --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
