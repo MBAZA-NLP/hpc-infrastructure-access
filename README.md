@@ -369,37 +369,4 @@ Now we can do what we came for: Running our code on the remote server and utilis
 
 [https://GitHub.com/jonas-nothnagel/sdg_text_classification](https://GitHub.com/jonas-nothnagel/sdg_text_classification) 
 
-As explained [above](#recommended-workflow), [connect to the remote server](#connect-to-the-remote-server) and ```git clone``` the repo into ```/data/USERNAME/```.
-
-First, let’s create a bash script that we will name ```job.sh```. This sets up our environment using pip ```requirements.txt``` (as described [above](#install-packages-into-the-container-with-pip-requirementstxt)):
-
-```bash
-#!/bin/bash
-pip install -r requirements.txt
-python ./src/train.py 
-```
-
-This is a minimal example, but in the script we could specify the whole job, including:
-
-- Creating/activating a virtual environment if necessary
-- installing additional dependencies
-- specifying the GPU support
-- specifying experiment tracking and where to put results etc.
-
-Next, make the script executable by running
-
-    chmod a+x job.sh
-
-Now, we will execute this bash script using a PyTorch image (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```), 1 GPU and 24 GB of RAM. We also mount the directory of the repository on the remote server (```/data/nothnagel/sdg_text_classification```):
-
-``` bash
-srun -K --gpus=1 --mem24GB -p batch  \
---container-workdir=`pwd`  \
---container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
---container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
-./job.sh
-```
-
-## Further reading
-- [DFKI HPC Cluster documentation](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/)
-    - Careful: Not everything applies.
+Description will follow very soon! 
