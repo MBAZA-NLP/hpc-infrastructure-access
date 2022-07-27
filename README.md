@@ -386,7 +386,9 @@ This is a minimal example, but in the script we could specify the whole job, inc
 - specifying the GPU support
 - specifying experiment tracking and where to put results etc.
 
-Next, compile the bash script with ```bash job.sh```.
+Next, make the script executable by running
+
+    chmod a+x job.sh
 
 Now, we will execute this bash script using a PyTorch image (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```), 1 GPU and 24 GB of RAM. We also mount the directory of the repository on the remote server (```/data/nothnagel/sdg_text_classification```):
 
@@ -395,7 +397,7 @@ srun -K --gpus=1 --mem24GB -p batch  \
 --container-workdir=`pwd`  \
 --container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
 --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
-job.sh
+./job.sh
 ```
 
 ## Further reading
