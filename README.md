@@ -365,41 +365,83 @@ scp -r local_file_path ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_dat
 
 
 ## Working example
-Now we can do what we came for: Running our code on the remote server and utilising the GPUs. Let’s use this repo as an example:
+Let's start the real task: Running our code on the remote server and utilising the GPUs. Let’s use this repo as an example:
 
 [https://GitHub.com/jonas-nothnagel/sdg_text_classification](https://GitHub.com/jonas-nothnagel/sdg_text_classification) 
 
-As explained [above](#recommended-workflow), [connect to the remote server](#connect-to-the-remote-server) and ```git clone``` the repo into ```/data/USERNAME/```.
-
-First, let’s create a bash script that we will name ```job.sh```. This sets up our environment using pip ```requirements.txt``` (as described [above](#install-packages-into-the-container-with-pip-requirementstxt)):
+*Note: If you run into permission errors, you may have to to make your bash scripts executable first. Simply run:*
 
 ```bash
-#!/bin/bash
-pip install -r requirements.txt
-python ./src/train.py 
+chmod u+x your_sript.sh
 ```
 
-This is a minimal example, but in the script we could specify the whole job, including:
+Let’s run the minimal working example with support of 8 GPUs:
 
-- Creating/activating a virtual environment if necessary
-- installing additional dependencies
-- specifying the GPU support
-- specifying experiment tracking and where to put results etc.
-
-Next, make the script executable by running
-
-    chmod a+x job.sh
-
-Now, we will execute this bash script using a PyTorch image (```/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh```), 1 GPU and 24 GB of RAM. We also mount the directory of the repository on the remote server (```/data/nothnagel/sdg_text_classification```):
-
-``` bash
-srun -K --gpus=1 --mem24GB -p batch  \
+```bash
+srun -K -N1 --gpus=8 --cpus-per-task=4 -p batch  \
 --container-workdir=`pwd`  \
 --container-mounts=/data/nothnagel/sdg_text_classification:/data/nothnagel/sdg_text_classification  \
 --container-image=/data/enroot/nvcr.io_nvidia_pytorch_22.05-py3.sqsh  \
-./job.sh
+python ./src/test.py
 ```
 
-## Further reading
-- [DFKI HPC Cluster documentation](http://projects.dfki.uni-kl.de/km-publications/web/ML/core/hpc-doc/)
-    - Careful: Not everything applies.
+Nice. It all works out!
+
+## Fine-tune the transformer model
+
+Now, let’s do what we came for and train our multi-class classification model! We have three components: 
+
+- the [train.py](https://github.com/jonas-nothnagel/sdg_text_classification/blob/main/src/train_hyperparameter_tuning.py) function.
+- the [bash script](https://github.com/jonas-nothnagel/sdg_text_classification/blob/main/job.sh) that installs all the requirements and starts the training script.
+- the [bash script](https://github.com/jonas-nothnagel/sdg_text_classification/blob/main/run-job.sh) that contains the specification for the remote server and runs the job: What container,  how much RAM/GPUs/etc shall be used
+
+For our experiments we will use [Wandb](https://wandb.ai/site) for tracking the experiments and subsequently run sweeps for hyper-parameter tuning. Using a tool such as Wandb is optional but highly recommended. It is good practice to get used to use such DevOps tool while building, training and testing models. 
+
+***Add login tokens and credentials:***
+
+- If you want to run the python scripts above without modification, you therefore need to create a Wandb account and provide your login credentials as indicated in the script. Otherwise, comment out the respective lines in the script.
+- The same is true if you want to directly push your trained model to the [huggingface hub](https://huggingface.co/).
+
+Store your login-tokens as *txt files* to read them in directly and do not push them by adding the folder in which they are nested to the *[gitignore](https://github.com/jonas-nothnagel/sdg_text_classification/blob/main/.gitignore)*. 
+
+### Train the models
+
+To train the multi-class classification model we cd in the cloned repo and run:
+
+```bash
+bash run-job.sh 
+```
+
+This will invoke the three components mentioned above and:
+
+- train the model
+- log all training details to Wandb and
+- automatically pushes the best model on your huggingface hub
+
+(if you provided your Login credentials in the [train.py](http://train.py) script). 
+
+### Hyperparametertuning
+
+In the [train.py](http://train.py) script you may notice that training parameters are given. Tuning this parameters and finding the optimal values for the problem at place is a common way to increase model performance. This is called hyperparameter-tuning. Basically we re-run the experiment with different combination of parameter values and log the results. Subsequently, we can find the best performing combination and re-train the model one last time with these optimal configuration and push it to the hub.
+
+For hyperparmater-tuning we are using [wandb](https://docs.wandb.ai/guides/sweeps) again. To run hyperparameter tuning you can use the bash script as follows:
+
+```bash
+bash run-job-hyper.sh
+```
+
+If it ran successfully you will have a great overview of the training such as:
+
+![Untitled](media/Untitled_8.png)
+
+And obtain the best parameters:
+
+![Untitled](media/Untitled_9.png)
+
+As you can see we further improved our **f1-score** to over **91%**! Great!
+
+And the model is pushed to the hub and ready for inference!
+
+[https://huggingface.co/jonas/roberta-base-finetuned-sdg](https://huggingface.co/jonas/sdg_classifier_osdg)
+
+![Untitled](media/Untitled_10.png)
