@@ -365,7 +365,7 @@ scp -r local_file_path ssh USERNAME@serv-6404.kl.dfki.de:/data/USERNAME/test_dat
 
 
 ## Working example
-Now we can do what we came for: Running our code on the remote server and utilising the GPUs. Let’s use this repo as an example:
+Let's start the real task: Running our code on the remote server and utilising the GPUs. Let’s use this repo as an example:
 
 [https://GitHub.com/jonas-nothnagel/sdg_text_classification](https://GitHub.com/jonas-nothnagel/sdg_text_classification) 
 
