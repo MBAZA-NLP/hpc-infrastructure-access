@@ -432,11 +432,11 @@ bash run-job-hyper.sh
 
 If it ran successfully you will have a great overview of the training such as:
 
-![Untitled](media/Untitled%08.png)
+![Untitled](media/Untitled_8.png)
 
 And obtain the best parameters:
 
-![Untitled](media/Untitled%09.png)
+![Untitled](media/Untitled_9.png)
 
 As you can see we further improved our **f1-score** to over **91%**! Great!
 
@@ -444,4 +444,4 @@ And the model is pushed to the hub and ready for inference!
 
 [https://huggingface.co/jonas/roberta-base-finetuned-sdg](https://huggingface.co/jonas/sdg_classifier_osdg)
 
-![Untitled](media/Untitled%10.png)
+![Untitled](media/Untitled_10.png)
