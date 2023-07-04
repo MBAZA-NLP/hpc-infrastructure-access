@@ -7,6 +7,11 @@ Know the feeling when you want to train a machine learning model on your compute
 
 This tutorial describes how to access an HPC computing cluster at DFKI which also offers GPUs.
 
+## Youtube Training with FAQ
+
+[<img src="https://i.ytimg.com/vi/Zsq5OUC5pMw/maxresdefault.jpg" width="50%">](https://youtu.be/Zsq5OUC5pMw "Training: How to Access and Use Computing Infrastructure at DFKI")
+
+
 ## Prerequisites
 
 Before you get started with running your code and training models you need to sort out two things:
